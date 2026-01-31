@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexio Group Training Program</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom Font Import - Noto Sans JP */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f5f5f0;
+            color: #333333;
+        }
+
+        /* Chart Container Styles */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Gantt Bar Styles */
+        .gantt-bar {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .gantt-bar:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 30 !important; /* Bring to front on hover */
+        }
+        .gantt-bar.active {
+            ring-width: 2px;
+            ring-color: white;
+            box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.3);
+        }
+
+        /* Tooltip Custom Styles */
+        #custom-tooltip {
+            pointer-events: none; /* Mouse passes through */
+            transform: translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        #custom-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .active-tab {
+            border-bottom: 3px solid #ea580c;
+            color: #ea580c;
+            font-weight: 700;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e5e5e5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Professional -->
+    <!-- Feature Update: Removed all references to "Successor" (後継者/承継) and replaced with "New Employee" (新人/育成) terminology. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-[#f5f5f0] min-h-screen flex flex-col relative">
+
+    <!-- Navigation -->
+    <nav class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold tracking-wider">NEXIO <span class="text-orange-500">NEXT</span></span>
+                    <span class="ml-4 text-xs bg-orange-600 px-2 py-1 rounded text-white hidden sm:block">新人育成プログラム</span>
+                </div>
+                <div class="flex space-x-4 text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active-tab px-3 py-2 transition-colors duration-200">全体像</button>
+                    <button onclick="switchTab('roadmap')" id="nav-roadmap" class="nav-item px-3 py-2 text-gray-300 hover:text-white transition-colors duration-200">ロードマップ(Gantt)</button>
+                    <button onclick="switchTab('modules')" id="nav-modules" class="nav-item px-3 py-2 text-gray-300 hover:text-white transition-colors duration-200">重点学習 (AI/市場)</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="space-y-8 animate-fade-in">
+            <!-- Header Section -->
+            <div class="bg-white rounded-xl shadow-sm p-8 border-l-4 border-orange-500">
+                <h1 class="text-3xl font-bold text-slate-800 mb-4">育成ミッション：ゼロからのプロフェッショナル育成</h1>
+                <p class="text-slate-600 leading-relaxed text-lg">
+                    本プログラムは、人材業界未経験の新人社員が、<span class="font-bold text-orange-600">最新のAI技術</span>を武器に、人材ビジネスの本質を最短距離で習得するためのロードマップです。
+                    これまでの異業種経験（接客業）で培った「観察力」を活かしつつ、ビジネスに必要な論理的思考と市場観をインストールします。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Profile Analysis -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-slate-800">現状スキル分析 (SWOT)</h2>
+                        <span class="text-sm text-slate-500">平成11年生まれ (25歳)</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-blue-800 mb-2">⚡ 強み (Strengths)</h3>
+                            <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+                                <li>対人コミュニケーション力 (接客経験)</li>
+                                <li>現場適応力・胆力</li>
+                                <li>デジタルネイティブ世代の素養</li>
+                            </ul>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-red-800 mb-2">⚠️ 課題 (Weaknesses)</h3>
+                            <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+                                <li>人材業界知識の欠如</li>
+                                <li>ビジネス文書・PCスキルの不足懸念</li>
+                                <li>経営数値への理解</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-6">
+                        <h3 class="font-bold text-slate-800 mb-4 text-center">スキル習得目標 (Before/After)</h3>
+                        <div class="chart-container">
+                            <canvas id="skillRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategic Overview -->
+                <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6">育成の3本柱</h2>
+                    
+                    <div class="space-y-6 flex-grow">
+                        <!-- Pillar 1 -->
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-indigo-100 rounded-full p-3 text-indigo-600">
+                                <span class="text-2xl">🤖</span>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-bold text-slate-800">1. AIネイティブ化</h3>
+                                <p class="text-slate-600 text-sm mt-1">
+                                    Google Gemini、Notebook LMを「専属の家庭教師」として使いこなす。知識不足をAIの検索・要約能力で補完し、高速でインプットを行う習慣を形成する。
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Pillar 2 -->
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-teal-100 rounded-full p-3 text-teal-600">
+                                <span class="text-2xl">⚖️</span>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-bold text-slate-800">2. 人材マーケットの構造理解</h3>
+                                <p class="text-slate-600 text-sm mt-1">
+                                    「企業（求人）」と「求職者」の需給バランスを理解する。なぜ採用が難しいのか、求職者は何を求めているのか、市場の歪みをビジネスチャンスとして捉える視点を養う。
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Pillar 3 -->
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-orange-100 rounded-full p-3 text-orange-600">
+                                <span class="text-2xl">🤝</span>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-bold text-slate-800">3. Nexioイズムの習得</h3>
+                                <p class="text-slate-600 text-sm mt-1">
+                                    グループ独自のノウハウ吸収。現場（接客）で培った「観察眼」を、人材マッチングの「見極め力」へと昇華させる。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 text-center">
+                        <button onclick="switchTab('roadmap')" class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow hover:bg-slate-700 transition w-full sm:w-auto">
+                            ガントチャートを見る
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROADMAP VIEW (GANTT CHART) -->
+        <div id="view-roadmap" class="hidden space-y-6 animate-fade-in">
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-4">
+                    <div class="mb-4 md:mb-0">
+                        <h2 class="text-2xl font-bold text-slate-800">📅 12ヶ月育成ガントチャート</h2>
+                        <p class="text-slate-600 text-sm mt-1">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-300 font-bold text-xs">Hover</span>
+                            バーにカーソルを合わせると「やるべきこと」が表示されます。
+                            <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-300 font-bold text-xs ml-2">Click</span>
+                            クリックで詳細を表示。
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <span class="flex items-center"><span class="w-3 h-3 bg-indigo-500 rounded-full mr-1"></span>導入期</span>
+                        <span class="flex items-center"><span class="w-3 h-3 bg-teal-500 rounded-full mr-1"></span>基礎期</span>
+                        <span class="flex items-center"><span class="w-3 h-3 bg-orange-500 rounded-full mr-1"></span>実践期</span>
+                        <span class="flex items-center"><span class="w-3 h-3 bg-slate-500 rounded-full mr-1"></span>応用期</span>
+                    </div>
+                </div>
+
+                <!-- Gantt Chart Container (Scrollable on mobile) -->
+                <div class="overflow-x-auto pb-4">
+                    <div class="min-w-[800px] border border-slate-200 rounded-lg bg-slate-50 p-4 select-none">
+                        
+                        <!-- Month Header -->
+                        <div class="grid grid-cols-12 gap-1 mb-2 text-center text-xs font-bold text-slate-500">
+                            <div>1月目</div><div>2月目</div><div>3月目</div><div>4月目</div><div>5月目</div><div>6月目</div>
+                            <div>7月目</div><div>8月目</div><div>9月目</div><div>10月目</div><div>11月目</div><div>12月目</div>
+                        </div>
+                        
+                        <!-- Grid Background Lines (Visual Guide) -->
+                        <div class="relative grid grid-cols-12 gap-1 h-64 border-t border-slate-200 pt-4">
+                            <!-- Vertical Lines (Absolute) -->
+                            <div class="absolute inset-0 grid grid-cols-12 gap-1 pointer-events-none">
+                                <div class="border-l border-slate-200 h-full col-start-2"></div>
+                                <div class="border-l border-slate-200 h-full col-start-3"></div>
+                                <div class="border-l border-slate-200 h-full col-start-4"></div>
+                                <div class="border-l border-slate-200 h-full col-start-5"></div>
+                                <div class="border-l border-slate-200 h-full col-start-6"></div>
+                                <div class="border-l border-slate-200 h-full col-start-7 border-slate-300 border-dashed"></div> <!-- Half year marker -->
+                                <div class="border-l border-slate-200 h-full col-start-8"></div>
+                                <div class="border-l border-slate-200 h-full col-start-9"></div>
+                                <div class="border-l border-slate-200 h-full col-start-10"></div>
+                                <div class="border-l border-slate-200 h-full col-start-11"></div>
+                                <div class="border-l border-slate-200 h-full col-start-12"></div>
+                            </div>
+
+                            <!-- Phase 1 Bar -->
+                            <button 
+                                onclick="selectRoadmapPhase(0)" 
+                                onmouseenter="showTooltip(event, 0)" 
+                                onmouseleave="hideTooltip()"
+                                id="gantt-bar-0" 
+                                class="gantt-bar absolute top-0 h-10 rounded-md bg-indigo-500 text-white text-xs font-bold shadow-sm flex items-center justify-center cursor-pointer z-10" 
+                                style="left: 0%; width: 8.33%;">
+                                導入期
+                            </button>
+                            
+                            <!-- Phase 2 Bar -->
+                            <button 
+                                onclick="selectRoadmapPhase(1)" 
+                                onmouseenter="showTooltip(event, 1)" 
+                                onmouseleave="hideTooltip()"
+                                id="gantt-bar-1" 
+                                class="gantt-bar absolute top-14 h-10 rounded-md bg-teal-500 text-white text-xs font-bold shadow-sm flex items-center justify-center cursor-pointer z-10" 
+                                style="left: 8.33%; width: 16.66%;">
+                                基礎期 (法規・市場)
+                            </button>
+
+                            <!-- Phase 3 Bar -->
+                            <button 
+                                onclick="selectRoadmapPhase(2)" 
+                                onmouseenter="showTooltip(event, 2)" 
+                                onmouseleave="hideTooltip()"
+                                id="gantt-bar-2" 
+                                class="gantt-bar absolute top-28 h-10 rounded-md bg-orange-500 text-white text-xs font-bold shadow-sm flex items-center justify-center cursor-pointer z-10" 
+                                style="left: 25%; width: 25%;">
+                                実践期 (現場OJT)
+                            </button>
+
+                            <!-- Phase 4 Bar -->
+                            <button 
+                                onclick="selectRoadmapPhase(3)" 
+                                onmouseenter="showTooltip(event, 3)" 
+                                onmouseleave="hideTooltip()"
+                                id="gantt-bar-3" 
+                                class="gantt-bar absolute top-42 h-10 rounded-md bg-slate-600 text-white text-xs font-bold shadow-sm flex items-center justify-center cursor-pointer z-10" 
+                                style="left: 50%; width: 50%;">
+                                応用期 (自走準備)
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail View (Triggered by Gantt) -->
+            <div id="roadmap-detail-wrapper" class="bg-white rounded-xl shadow-sm p-8 border border-slate-200 min-h-[400px]">
+                <div id="roadmap-detail-content" class="transition-opacity duration-300">
+                    <!-- Content injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULES VIEW -->
+        <div id="view-modules" class="hidden space-y-8 animate-fade-in">
+            
+            <!-- AI Training Module -->
+            <section class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="bg-indigo-900 p-6 text-white flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold">🤖 AI利活用トレーニング</h2>
+                        <p class="text-indigo-200 text-sm mt-1">未経験のハンデをAIで埋め、加速度的に成長するための必須スキル。</p>
+                    </div>
+                    <div class="bg-indigo-800 px-4 py-2 rounded text-xs font-mono">
+                        Target: Google Gemini / Notebook LM
+                    </div>
+                </div>
+                
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Tool 1: Gemini -->
+                    <div class="border border-indigo-100 rounded-lg p-5 hover:shadow-md transition-shadow">
+                        <h3 class="font-bold text-indigo-700 text-lg mb-3 flex items-center">
+                            <span class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-2 text-indigo-600">G</span>
+                            Google Gemini 活用法
+                        </h3>
+                        <p class="text-sm text-slate-600 mb-4">
+                            分からない用語、業界のトレンド、メールの文面作成など、「専属コンサルタント」として対話を行う。
+                        </p>
+                        <div class="bg-slate-50 p-4 rounded text-sm space-y-2">
+                            <h4 class="font-bold text-slate-700 text-xs uppercase">実践トレーニング課題</h4>
+                            <div class="flex items-start">
+                                <input type="checkbox" class="mt-1 mr-2 accent-indigo-600" id="ai-task-1">
+                                <label for="ai-task-1" class="cursor-pointer">「人材派遣と人材紹介の違い」を中学生でも分かるように説明させるプロンプトを作成する。</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" class="mt-1 mr-2 accent-indigo-600" id="ai-task-2">
+                                <label for="ai-task-2" class="cursor-pointer">競合他社（大手3社）の強みをGeminiに分析させ、表形式で出力させる。</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" class="mt-1 mr-2 accent-indigo-600" id="ai-task-3">
+                                <label for="ai-task-3" class="cursor-pointer">架空のクライアントへの営業メール案を3パターン作成させる。</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tool 2: Notebook LM -->
+                    <div class="border border-indigo-100 rounded-lg p-5 hover:shadow-md transition-shadow">
+                        <h3 class="font-bold text-indigo-700 text-lg mb-3 flex items-center">
+                            <span class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-2 text-indigo-600">N</span>
+                            Notebook LM 活用法
+                        </h3>
+                        <p class="text-sm text-slate-600 mb-4">
+                            社内マニュアル、業界白書、関連法規などの膨大なPDFを読み込ませ、即座に回答を引き出す「専用知識ベース」を作る。
+                        </p>
+                        <div class="bg-slate-50 p-4 rounded text-sm space-y-2">
+                            <h4 class="font-bold text-slate-700 text-xs uppercase">実践トレーニング課題</h4>
+                            <div class="flex items-start">
+                                <input type="checkbox" class="mt-1 mr-2 accent-indigo-600" id="ai-task-4">
+                                <label for="ai-task-4" class="cursor-pointer">労働基準法や派遣法のガイドブック(PDF)を読み込ませ、法的な疑問点を質問する。</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" class="mt-1 mr-2 accent-indigo-600" id="ai-task-5">
+                                <label for="ai-task-5" class="cursor-pointer">Nexioグループの過去の営業資料をアップロードし、成功事例の共通点を抽出する。</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market Analysis Module -->
+            <section class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="bg-teal-900 p-6 text-white">
+                    <h2 class="text-2xl font-bold">📊 人材マーケット構造の理解</h2>
+                    <p class="text-teal-200 text-sm mt-1">「売り手市場」とは何か？データの裏側にある心理を読み解く。</p>
+                </div>
+
+                <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg mb-2">求人倍率の推移と「需給ギャップ」</h3>
+                        <p class="text-sm text-slate-600 mb-4">
+                            有効求人倍率が1.0を超えている状態は、仕事の数(求人)が求職者を上回っていることを示します。
+                            しかし、職種や地域によって大きな偏りがあります。この「ズレ」こそが我々のビジネスチャンスです。
+                        </p>
+                        <div class="bg-teal-50 p-4 rounded-lg text-sm mb-4">
+                            <h4 class="font-bold text-teal-800 mb-2">💡 考察ポイント</h4>
+                            <ul class="list-disc list-inside space-y-1 text-slate-700">
+                                <li>なぜ企業は人を採用できないのか？（条件？知名度？魅力？）</li>
+                                <li>求職者は何を最優先しているのか？（給与？時間？やりがい？）</li>
+                                <li>AIは「条件マッチング」は得意だが、「隠れた動機」の発見は人間が得意。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-2 rounded-lg border border-slate-200">
+                        <h4 class="text-xs font-bold text-center text-slate-500 mb-2">市場イメージモデル（需給バランス）</h4>
+                        <div class="chart-container">
+                            <canvas id="marketChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <p>&copy; 2026 Nexio Group New Employee Training Program. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Custom Tooltip Element -->
+    <div id="custom-tooltip" class="fixed z-[100] hidden opacity-0 bg-slate-800 text-white p-4 rounded-lg shadow-2xl max-w-sm border border-slate-700">
+        <!-- Content injected by JS -->
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Data Definitions ---
+
+        // Roadmap Data
+        const roadmapData = [
+            {
+                id: 'phase1',
+                title: '【導入期】 1ヶ月目 - 土台構築',
+                subtitle: 'AIツール習得とマインドセット',
+                colorClass: 'text-indigo-600',
+                bgClass: 'bg-indigo-50',
+                borderClass: 'border-indigo-500',
+                content: {
+                    goal: '学習環境の整備と、AIを使いこなす基礎力の定着',
+                    tasks: [
+                        'Google Gemini / Notebook LM のアカウント開設と基本操作習得',
+                        'ビジネスマナー、PC基礎スキル（タイピング、Office）の再確認',
+                        'Nexioグループの理念・歴史・組織図の理解',
+                        '日報作成（AIを活用して要約・推敲を行う習慣づけ）'
+                    ],
+                    method: '座学中心。毎日Notebook LMで「今日の学び」をアーカイブ化させる。'
+                }
+            },
+            {
+                id: 'phase2',
+                title: '【基礎期】 2-3ヶ月目 - 市場理解',
+                subtitle: '人材業界の法規と構造',
+                colorClass: 'text-teal-600',
+                bgClass: 'bg-teal-50',
+                borderClass: 'border-teal-500',
+                content: {
+                    goal: '人材ビジネスの法律的側面と市場原理の理解',
+                    tasks: [
+                        '労働基準法、派遣法、職業安定法の基礎学習',
+                        '求人票の読み方、書き方のトレーニング',
+                        '競合調査（Webリサーチ＋AI分析）',
+                        '「誰に」「何を」売るビジネスなのかの構造理解'
+                    ],
+                    method: 'AIに「先生役」をさせ、法規制のクイズを出させる等の対話学習。'
+                }
+            },
+            {
+                id: 'phase3',
+                title: '【実践期】 4-6ヶ月目 - 現場OJT',
+                subtitle: '営業・コーディネーター同行',
+                colorClass: 'text-orange-600',
+                bgClass: 'bg-orange-50',
+                borderClass: 'border-orange-500',
+                content: {
+                    goal: '顧客と求職者の「生の声」を聞き、マッチングの難しさを体感する',
+                    tasks: [
+                        '先輩社員の商談への同行（議事録作成）',
+                        '求職者面談の同席（黒服時代の観察眼を活かす）',
+                        '実際の求人原稿の作成トライアル',
+                        '登録スタッフへの電話対応・フォローアップ'
+                    ],
+                    method: '現場同行。黒服経験で培った「空気読み」スキルをビジネスの場に転換する。'
+                }
+            },
+            {
+                id: 'phase4',
+                title: '【応用期】 7-12ヶ月目 - 自走準備',
+                subtitle: '小規模案件担当と数値管理',
+                colorClass: 'text-slate-600',
+                bgClass: 'bg-slate-100',
+                borderClass: 'border-slate-500',
+                content: {
+                    goal: '自身の担当を持ち、売上とコストの感覚を養う',
+                    tasks: [
+                        '特定の小規模クライアントまたは領域の担当',
+                        '月次目標の設定と予実管理',
+                        '次世代リーダーとしてのリーダーシップ研修（外部セミナー等）',
+                        '次年度の事業計画案の作成（AIを活用しシミュレーション）'
+                    ],
+                    method: 'メンター（杉山代表または幹部）による週次1on1でのフィードバック。'
+                }
+            }
+        ];
+
+        // --- Chart Configurations ---
+
+        function initCharts() {
+            // 1. Skill Radar Chart
+            const ctxRadar = document.getElementById('skillRadarChart').getContext('2d');
+            new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['業界知識', 'AI活用力', '対人折衝力', '法令知識', '経営数値', 'PCスキル'],
+                    datasets: [{
+                        label: '現在 (Before)',
+                        data: [1, 2, 4, 1, 1, 2],
+                        fill: true,
+                        backgroundColor: 'rgba(148, 163, 184, 0.2)',
+                        borderColor: 'rgb(148, 163, 184)',
+                        pointBackgroundColor: 'rgb(148, 163, 184)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(148, 163, 184)'
+                    }, {
+                        label: '1年後目標 (Target)',
+                        data: [4, 5, 5, 4, 3, 4],
+                        fill: true,
+                        backgroundColor: 'rgba(234, 88, 12, 0.2)',
+                        borderColor: 'rgb(234, 88, 12)',
+                        pointBackgroundColor: 'rgb(234, 88, 12)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(234, 88, 12)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: { line: { borderWidth: 3 } },
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 5,
+                            ticks: { stepSize: 1, backdropColor: 'transparent' }
+                        }
+                    },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // 2. Market Trend Chart
+            const ctxMarket = document.getElementById('marketChart').getContext('2d');
+            new Chart(ctxMarket, {
+                type: 'line',
+                data: {
+                    labels: ['2019', '2020', '2021', '2022', '2023', '2024(予)'],
+                    datasets: [
+                        {
+                            label: '求人数 (需要)',
+                            data: [120, 90, 110, 135, 145, 150],
+                            borderColor: 'rgb(20, 184, 166)',
+                            backgroundColor: 'rgba(20, 184, 166, 0.5)',
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: '求職者数 (供給)',
+                            data: [100, 110, 105, 100, 95, 92],
+                            borderColor: 'rgb(99, 102, 241)',
+                            backgroundColor: 'rgba(99, 102, 241, 0.5)',
+                            tension: 0.3,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: '労働市場の需給ギャップ（イメージ）' },
+                        tooltip: { callbacks: { footer: () => '需要 > 供給 = 売り手市場（採用難）' } }
+                    },
+                    scales: { y: { beginAtZero: false, title: { display: true, text: '指数' } } }
+                }
+            });
+        }
+
+        // --- View Switching Logic ---
+        function switchTab(tabId) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-roadmap').classList.add('hidden');
+            document.getElementById('view-modules').classList.add('hidden');
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active-tab', 'text-white');
+                el.classList.add('text-gray-300');
+            });
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            activeNav.classList.add('active-tab', 'text-white');
+            activeNav.classList.remove('text-gray-300');
+        }
+
+        // --- Roadmap Interaction Logic (Gantt & Tooltip) ---
+        function selectRoadmapPhase(index) {
+            // Visual feedback on Gantt Bars
+            document.querySelectorAll('.gantt-bar').forEach((bar, i) => {
+                if (i === index) {
+                    bar.classList.add('active', 'ring-2', 'ring-white');
+                    bar.style.zIndex = '20';
+                } else {
+                    bar.classList.remove('active', 'ring-2', 'ring-white');
+                    bar.style.zIndex = '10';
+                }
+            });
+
+            // Update Content
+            const phase = roadmapData[index];
+            const contentContainer = document.getElementById('roadmap-detail-content');
+            
+            contentContainer.style.opacity = '0';
+            setTimeout(() => {
+                contentContainer.innerHTML = `
+                    <div class="border-b pb-4 mb-4 ${phase.colorClass}">
+                        <div class="flex items-center gap-3 mb-2">
+                             <span class="text-xs font-bold px-2 py-1 rounded bg-slate-800 text-white">Phase ${index + 1}</span>
+                             <span class="text-sm font-bold opacity-75">${phase.title}</span>
+                        </div>
+                        <h3 class="text-3xl font-bold">${phase.subtitle}</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-2 flex items-center text-sm uppercase tracking-wider">
+                                🎯 到達目標 (Goal)
+                            </h4>
+                            <p class="text-slate-700 ${phase.bgClass} p-4 rounded-lg text-sm leading-relaxed border ${phase.borderClass}">
+                                ${phase.content.goal}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-2 flex items-center text-sm uppercase tracking-wider">
+                                📝 学習スタイル (Method)
+                            </h4>
+                            <p class="text-slate-600 bg-white border border-slate-200 p-4 rounded-lg text-sm leading-relaxed shadow-sm">
+                                ${phase.content.method}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h4 class="font-bold text-slate-800 mb-4 border-l-4 ${phase.borderClass} pl-3">具体的なアクションプラン</h4>
+                        <div class="bg-white rounded-lg border border-slate-100 divide-y divide-slate-100">
+                            ${phase.content.tasks.map(task => `
+                                <div class="p-3 flex items-start hover:bg-slate-50 transition-colors">
+                                    <span class="text-green-500 mr-3 mt-0.5">✔</span>
+                                    <span class="text-sm text-slate-700 font-medium">${task}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                contentContainer.style.opacity = '1';
+            }, 150);
+        }
+
+        // --- Tooltip Functions ---
+        function showTooltip(event, index) {
+            const tooltip = document.getElementById('custom-tooltip');
+            const phase = roadmapData[index];
+            
+            // Build Content
+            let html = `
+                <div class="font-bold mb-2 text-orange-400 text-xs uppercase tracking-wider">${phase.title}</div>
+                <div class="font-bold mb-3 text-lg leading-tight">${phase.subtitle}</div>
+                <div class="text-xs font-bold text-slate-400 mb-1">【この時期のTODO】</div>
+                <ul class="list-none space-y-2 text-sm">
+            `;
+            
+            phase.content.tasks.forEach(task => {
+                html += `<li class="flex items-start"><span class="text-orange-500 mr-2">●</span>${task}</li>`;
+            });
+            html += '</ul>';
+            
+            tooltip.innerHTML = html;
+            
+            // Positioning Logic
+            const rect = event.currentTarget.getBoundingClientRect();
+            
+            // Default position: below center of the bar
+            let top = rect.bottom + 10; 
+            let left = rect.left + (rect.width / 2) - 150; // Center tooltip (width approx 300px)
+
+            // Adjust horizontal if off screen
+            if (left < 10) left = 10;
+            if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+
+            // Adjust vertical if too close to bottom
+            // If tooltip height is approx 200px
+            if (top + 200 > window.innerHeight) {
+                top = rect.top - 10 - tooltip.offsetHeight; // Show above if needed (rough calc, better handled with computed height if already visible)
+                if (top < 0) top = rect.bottom + 10; // Fallback
+            }
+
+            tooltip.style.top = `${top}px`;
+            tooltip.style.left = `${left}px`;
+            
+            // Show
+            tooltip.classList.remove('hidden');
+            // Small delay to allow transition to trigger
+            requestAnimationFrame(() => {
+                tooltip.classList.add('visible');
+            });
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('custom-tooltip');
+            tooltip.classList.remove('visible');
+            setTimeout(() => {
+                tooltip.classList.add('hidden');
+            }, 200);
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            selectRoadmapPhase(0);
+        });
+
+    </script>
+    <style>
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</body>
+</html>
